@@ -225,7 +225,7 @@
         function importData() {
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.json';
+            input.accept = '.json,.csv';
             
             input.onchange = function(e) {
                 const file = e.target.files[0];
@@ -234,10 +234,57 @@
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     try {
-                        const imported = JSON.parse(event.target.result);
+                        let imported = [];
                         
-                        if (!Array.isArray(imported)) {
-                            throw new Error('Ungültiges Format');
+                        // Prüfe ob JSON oder CSV
+                        if (file.name.endsWith('.json')) {
+                            // JSON Import
+                            imported = JSON.parse(event.target.result);
+                            
+                            if (!Array.isArray(imported)) {
+                                throw new Error('Ungültiges JSON-Format');
+                            }
+                        } else if (file.name.endsWith('.csv')) {
+                            // CSV Import
+                            const lines = event.target.result.split('\n');
+                            const headers = lines[0].split(',');
+                            
+                            for (let i = 1; i < lines.length; i++) {
+                                if (!lines[i].trim()) continue;
+                                
+                                const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
+                                const cleanValues = values.map(v => v.replace(/^"|"$/g, '').trim());
+                                
+                                if (cleanValues.length < 10) continue;
+                                
+                                const entry = {
+                                    date: cleanValues[0],
+                                    dayRating: parseInt(cleanValues[1]) || null,
+                                    stress: parseInt(cleanValues[2]) || null,
+                                    sport: cleanValues[3] === 'Ja',
+                                    sportTypes: cleanValues[4] ? cleanValues[4].split(';').filter(t => t) : [],
+                                    sportDuration: cleanValues[5] || null,
+                                    noSmoking: cleanValues[6] === 'Ja',
+                                    noAlcohol: cleanValues[7] === 'Ja',
+                                    healthyFood: cleanValues[8] === 'Ja',
+                                    iceBath: cleanValues[9] === 'Ja',
+                                    healthy: cleanValues[10] === 'Ja',
+                                    floss: cleanValues[11] === 'Ja',
+                                    reading: cleanValues[12] === 'Ja',
+                                    carbs: cleanValues[13] || null,
+                                    protein: cleanValues[14] || null,
+                                    sauna: cleanValues[15] === 'Ja',
+                                    weight: cleanValues[16] ? parseFloat(cleanValues[16]) : null,
+                                    points: parseInt(cleanValues[17]) || 0,
+                                    timestamp: cleanValues[18] || new Date().toISOString()
+                                };
+                                
+                                imported.push(entry);
+                            }
+                        }
+                        
+                        if (imported.length === 0) {
+                            throw new Error('Keine gültigen Daten gefunden');
                         }
                         
                         const action = confirm(
@@ -276,7 +323,7 @@
                             }
                         }
                     } catch (error) {
-                        alert('❌ Fehler beim Importieren: Ungültige Datei!\n\nBitte nur JSON-Dateien verwenden, die mit der Export-Funktion erstellt wurden.');
+                        alert('❌ Fehler beim Importieren!\n\nBitte verwende:\n• JSON-Dateien (erstellt mit Export)\n• CSV-Dateien aus CodePen\n\nFehler: ' + error.message);
                         console.error('Import error:', error);
                     }
                 };
