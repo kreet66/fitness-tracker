@@ -257,6 +257,7 @@
                                 
                                 if (cleanValues.length < 10) continue;
                                 
+                                // CSV Format: Datum,Tagesbewertung,Stress,Sport,Sportarten,Dauer,Nicht geraucht,Kein Alkohol,Gesund gegessen,Eisbad,Gesund,Zahnpflege,Gelesen,Sauna,Carbs,Protein,Gewicht,Punkte,Zeitstempel
                                 const entry = {
                                     date: cleanValues[0],
                                     dayRating: parseInt(cleanValues[1]) || null,
@@ -271,9 +272,9 @@
                                     healthy: cleanValues[10] === 'Ja',
                                     floss: cleanValues[11] === 'Ja',
                                     reading: cleanValues[12] === 'Ja',
-                                    carbs: cleanValues[13] || null,
-                                    protein: cleanValues[14] || null,
-                                    sauna: cleanValues[15] === 'Ja',
+                                    sauna: cleanValues[13] === 'Ja',
+                                    carbs: cleanValues[14] || null,
+                                    protein: cleanValues[15] || null,
                                     weight: cleanValues[16] ? parseFloat(cleanValues[16]) : null,
                                     points: parseInt(cleanValues[17]) || 0,
                                     timestamp: cleanValues[18] || new Date().toISOString()
