@@ -208,14 +208,83 @@
         }
 
         function exportData() {
-            const csv = ['Datum,Tagesbewertung,Stress,Sport,Sportarten,Dauer,Nicht geraucht,Kein Alkohol,Gesund gegessen,Eisbad,Gesund,Zahnpflege,Gelesen,Carbs,Protein,Sauna,Gewicht,Punkte,Zeitstempel',
-                ...appState.entries.map(e => `${e.date},${e.dayRating || ''},${e.stress || ''},${e.sport ? 'Ja' : 'Nein'},"${(e.sportTypes || []).join(';')}",${e.sportDuration || ''},${e.noSmoking ? 'Ja' : 'Nein'},${e.noAlcohol ? 'Ja' : 'Nein'},${e.healthyFood ? 'Ja' : 'Nein'},${e.iceBath ? 'Ja' : 'Nein'},${e.healthy ? 'Ja' : 'Nein'},${e.floss ? 'Ja' : 'Nein'},${e.reading ? 'Ja' : 'Nein'},${e.carbs || ''},${e.protein || ''},${e.sauna ? 'Ja' : 'Nein'},${e.weight || ''},${e.points},${e.timestamp || ''}`)
-            ].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
+            if (appState.entries.length === 0) {
+                alert('⚠️ Keine Daten zum Exportieren vorhanden!');
+                return;
+            }
+            const dataStr = JSON.stringify(appState.entries, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `health_${new Date().toISOString().split('T')[0]}.csv`;
+            a.href = url;
+            a.download = `health-tracker-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
+            showToast('✅ Daten exportiert!');
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        
+                        if (!Array.isArray(imported)) {
+                            throw new Error('Ungültiges Format');
+                        }
+                        
+                        const action = confirm(
+                            `📥 ${imported.length} Einträge gefunden!\n\n` +
+                            `Möchtest du die Daten:\n\n` +
+                            `✅ ZUSAMMENFÜHREN mit vorhandenen Daten?\n` +
+                            `(OK drücken)\n\n` +
+                            `🔄 ÜBERSCHREIBEN (alle alten Daten löschen)?\n` +
+                            `(Abbrechen drücken, dann neuen Dialog bestätigen)`
+                        );
+                        
+                        if (action) {
+                            // Zusammenführen
+                            imported.forEach(newEntry => {
+                                const existingIndex = appState.entries.findIndex(e => e.date === newEntry.date);
+                                if (existingIndex >= 0) {
+                                    appState.entries[existingIndex] = newEntry;
+                                } else {
+                                    appState.entries.push(newEntry);
+                                }
+                            });
+                            
+                            appState.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                            localStorage.setItem('healthEntries', JSON.stringify(appState.entries));
+                            renderApp();
+                            
+                            showToast(`✅ ${imported.length} Einträge importiert und zusammengeführt!`);
+                        } else {
+                            if (confirm('⚠️ ACHTUNG: Alle vorhandenen Daten werden gelöscht!\n\nBist du sicher?')) {
+                                appState.entries = imported;
+                                appState.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                                localStorage.setItem('healthEntries', JSON.stringify(appState.entries));
+                                renderApp();
+                                
+                                showToast(`✅ ${imported.length} Einträge importiert (alte Daten überschrieben)!`);
+                            }
+                        }
+                    } catch (error) {
+                        alert('❌ Fehler beim Importieren: Ungültige Datei!\n\nBitte nur JSON-Dateien verwenden, die mit der Export-Funktion erstellt wurden.');
+                        console.error('Import error:', error);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
         }
 
         function toggleHistory() { appState.showHistory = !appState.showHistory; renderApp(); }
@@ -364,7 +433,7 @@
                 ${appState.showViz ? `<div class="card"><div class="viz-month-nav"><button onclick="changeVizMonth(-1)" class="viz-nav-btn">◀ Zurück</button><div></div><button onclick="changeVizMonth(1)" class="viz-nav-btn" ${appState.vizYear === new Date().getFullYear() && appState.vizMonth === new Date().getMonth() ? 'disabled' : ''}>Vor ▶</button></div>${[-1,0,1].map(o => { const md = getMonthDays(o); const st = getMonthStats(md); return `<div class="viz-month-container"><div class="viz-month-title"><div class="viz-month-title-main">${monthNames[md.month]} ${md.year}</div><div class="viz-month-stats"><span style="color:#16a34a">${st.avg}</span><span style="color:${getTrendColor(st.trend)};font-size:1.2rem">${getTrendIcon(st.trend)}</span></div></div><div class="viz-weekdays">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d => `<div class="viz-weekday">${d}</div>`).join('')}</div><div class="viz-grid">${md.days.map(d => d.empty ? '<div></div>' : `<div class="viz-day" style="background:${getDayColor(d.points)};color:#374151" onclick="showDayModal('${d.date}')"><div class="viz-day-number">${d.day}</div>${d.rating ? `<div class="viz-day-emoji">${getRatingEmoji(d.rating)}</div>` : ''}</div>`).join('')}</div></div>`; }).join('')}<div class="viz-legend">${[{c:'#86efac',t:'4'},{c:'#bef264',t:'3'},{c:'#fef08a',t:'2'},{c:'#fed7aa',t:'1'},{c:'#fecaca',t:'0'},{c:'#f3f4f6',t:'-'}].map(l => `<div class="viz-legend-item"><div class="viz-legend-box" style="background:${l.c}"></div><span>${l.t}</span></div>`).join('')}</div></div>` : ''}
 
                 <button onclick="toggleHistory()" class="btn-toggle"><div>📅 Verlauf (${appState.entries.length})</div><span>${appState.showHistory ? '▼' : '▶'}</span></button>
-                ${appState.showHistory ? `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:0.75rem"><h2 style="font-size:1rem;font-weight:bold">Alle Einträge</h2><button onclick="exportData()" style="color:#3b82f6;font-weight:600;background:none;border:none;cursor:pointer">Export</button></div>${appState.entries.map(e => `<div style="border:2px solid #f3f4f6;border-radius:0.5rem;padding:0.625rem;margin-bottom:0.5rem"><div style="display:flex;justify-content:space-between"><div style="font-weight:600;font-size:0.875rem">${new Date(e.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})} ${e.dayRating ? `⭐${e.dayRating}` : ''} ${e.stress ? `😰${e.stress}` : ''}</div><div style="display:flex;gap:0.5rem;align-items:center"><div style="font-size:1.25rem;font-weight:bold;color:#16a34a">${e.points}</div><button onclick="editEntry('${e.date}')" style="color:#3b82f6;background:none;border:none;cursor:pointer">✏️</button></div></div><div style="display:flex;gap:0.5rem;font-size:0.75rem;margin-top:0.375rem">${e.sport ? '🏃✅' : '🏃❌'} ${e.noSmoking ? '🚭✅' : '🚭❌'} ${e.noAlcohol ? '🍺✅' : '🍺❌'} ${e.healthyFood ? '🥗✅' : '🥗❌'} ${e.iceBath ? '🧊✅' : '🧊❌'} ${e.healthy ? '💪✅' : '💪❌'} ${e.floss ? '🦷✅' : '🦷❌'} ${e.reading ? '📖✅' : '📖❌'} ${e.sauna ? '🧖✅' : '🧖❌'}</div></div>`).join('')}</div>` : ''}
+                ${appState.showHistory ? `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:0.75rem"><h2 style="font-size:1rem;font-weight:bold">Alle Einträge</h2><div style="display:flex;gap:0.5rem"><button onclick="importData()" style="color:#22c55e;font-weight:600;background:none;border:none;cursor:pointer">📥 Import</button><button onclick="exportData()" style="color:#3b82f6;font-weight:600;background:none;border:none;cursor:pointer">📤 Export</button></div></div>${appState.entries.map(e => `<div style="border:2px solid #f3f4f6;border-radius:0.5rem;padding:0.625rem;margin-bottom:0.5rem"><div style="display:flex;justify-content:space-between"><div style="font-weight:600;font-size:0.875rem">${new Date(e.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})} ${e.dayRating ? `⭐${e.dayRating}` : ''} ${e.stress ? `😰${e.stress}` : ''}</div><div style="display:flex;gap:0.5rem;align-items:center"><div style="font-size:1.25rem;font-weight:bold;color:#16a34a">${e.points}</div><button onclick="editEntry('${e.date}')" style="color:#3b82f6;background:none;border:none;cursor:pointer">✏️</button></div></div><div style="display:flex;gap:0.5rem;font-size:0.75rem;margin-top:0.375rem">${e.sport ? '🏃✅' : '🏃❌'} ${e.noSmoking ? '🚭✅' : '🚭❌'} ${e.noAlcohol ? '🍺✅' : '🍺❌'} ${e.healthyFood ? '🥗✅' : '🥗❌'} ${e.iceBath ? '🧊✅' : '🧊❌'} ${e.healthy ? '💪✅' : '💪❌'} ${e.floss ? '🦷✅' : '🦷❌'} ${e.reading ? '📖✅' : '📖❌'} ${e.sauna ? '🧖✅' : '🧖❌'}</div></div>`).join('')}</div>` : ''}
             `;
 
             if (appState.modalEntry) {
