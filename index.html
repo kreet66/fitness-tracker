@@ -1,14 +1,14 @@
-appState.entries = appState.entries.filter(e<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Health Tracker</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #f0fdf4 0%, #dbeafe 100%); min-height: 100vh; padding: 1rem; }
-        .container { max-width: 42rem; margin: 0 auto; }
         .card { background: white; border-radius: 0.75rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 1rem; margin-bottom: 1rem; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
         .title { font-size: 1.25rem; font-weight: bold; color: #1f2937; }
@@ -47,12 +47,12 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
         .stats-count .good { color: #16a34a; font-weight: 900; font-size: 1.2rem; }
         .stats-count .bad { color: #ef4444; font-weight: 900; font-size: 1.2rem; }
         .sport-details { margin-left: 2.3rem; margin-top: 0.5rem; padding: 0.5rem; background: #f9fafb; border-radius: 0.5rem; }
-        .sport-activity { display: grid; grid-template-columns: 2fr 1fr auto; gap: 0.3rem; margin-bottom: 0.3rem; align-items: center; }
-        .sport-type-select { border: 2px solid #d1d5db; border-radius: 0.35rem; padding: 0.3rem; font-weight: 600; background: white; font-size: 0.7rem; }
-        .sport-duration-select { border: 2px solid #d1d5db; border-radius: 0.35rem; padding: 0.3rem; font-weight: 600; background: white; font-size: 0.65rem; }
-        .sport-remove-btn { background: #ef4444; color: white; border: none; border-radius: 0.3rem; padding: 0.3rem 0.5rem; cursor: pointer; font-size: 0.7rem; font-weight: 600; }
-        .sport-add-btn { background: #3b82f6; color: white; border: none; border-radius: 0.35rem; padding: 0.4rem; width: 100%; cursor: pointer; font-size: 0.7rem; font-weight: 600; margin-top: 0.3rem; }
-        
+        .sport-types { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; margin-bottom: 0.5rem; }
+        .sport-type-btn { border: 2px solid #d1d5db; border-radius: 0.35rem; padding: 0.3rem; font-weight: 600; background: white; cursor: pointer; font-size: 0.7rem; }
+        .sport-type-btn.selected { border-color: #3b82f6; background: #dbeafe; color: #1e40af; }
+        .duration-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.3rem; }
+        .duration-btn { border: 2px solid #d1d5db; border-radius: 0.35rem; padding: 0.3rem; font-weight: 600; background: white; cursor: pointer; font-size: 0.65rem; }
+        .duration-btn.selected { border-color: #8b5cf6; background: #ede9fe; color: #5b21b6; }
         .rating-box { margin: 0.75rem 0; padding: 1rem; border-radius: 0.75rem; }
         .rating-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
         .stress-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
@@ -61,18 +61,15 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
         .rating-num { font-size: 1rem; margin-bottom: 0.25rem; }
         .rating-emoji { font-size: 0.65rem; margin-bottom: 0.15rem; }
         .rating-text { font-size: 0.55rem; }
-        
         .r1 { border-color: #ef4444; background: #fef2f2; color: #991b1b; }
         .r2 { border-color: #f59e0b; background: #fef3c7; color: #92400e; }
         .r3 { border-color: #eab308; background: #fef9c3; color: #854d0e; }
         .r4 { border-color: #84cc16; background: #f7fee7; color: #3f6212; }
         .r5 { border-color: #22c55e; background: #dcfce7; color: #166534; }
-        
         .hint { text-align: center; margin-top: 0.25rem; font-size: 0.75rem; color: #9ca3af; }
         .weight-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.15rem; margin-top: 0.3rem; }
         .weight-btn { border: 2px solid #d1d5db; border-radius: 0.3rem; padding: 0.1rem 0.05rem; font-weight: 600; background: white; cursor: pointer; font-size: 0.6rem; }
         .weight-btn.selected { border-color: #8b5cf6; background: #ede9fe; color: #5b21b6; }
-        
         .viz-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.08rem; margin-bottom: 0.5rem; }
         .viz-day { height: 2rem; border-radius: 0.15rem; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 700; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
         .viz-day-number { font-size: 0.85rem; }
@@ -89,7 +86,6 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
         .viz-legend { display: flex; justify-content: center; gap: 1rem; font-size: 0.7rem; }
         .viz-legend-item { display: flex; align-items: center; gap: 0.25rem; }
         .viz-legend-box { width: 1rem; height: 1rem; border-radius: 0.25rem; }
-        
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: white; border-radius: 1rem; padding: 1.5rem; max-width: 90%; max-height: 80vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #e5e7eb; }
@@ -101,7 +97,6 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
         .modal-item { font-size: 0.8rem; }
         .toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; font-weight: 600; z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out; }
         @keyframes slideIn { from { transform: translateX(-50%) translateY(-100%); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
-        .divider { border-top: 2px solid #e5e7eb; margin: 1rem 0; }
     </style>
 </head>
 <body>
@@ -110,7 +105,7 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
         let appState = {
             entries: JSON.parse(localStorage.getItem('healthEntries') || '[]'),
             selectedDate: new Date().toISOString().split('T')[0],
-            formData: { dayRating: null, stress: null, sport: null, sportTypes: [], sportDuration: null, smoking: null, alcohol: null, food: null, iceBath: null, healthy: null, floss: null, reading: null, carbs: null, protein: null, weight: null },
+            formData: { dayRating: null, stress: null, sport: null, sportTypes: [], sportDuration: null, smoking: null, alcohol: null, food: null, iceBath: null, healthy: null, floss: null, reading: null, carbs: null, protein: null, sauna: null, weight: null },
             showHistory: false,
             showViz: true,
             vizMonth: 0,
@@ -128,27 +123,19 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
             setTimeout(() => toast.remove(), 2000);
         }
 
-        function toggleSportType(type) { const idx = appState.formData.sportTypes.indexOf(type); if (idx > -1) appState.formData.sportTypes.splice(idx, 1); else appState.formData.sportTypes.push(type); renderApp(); }
+        function toggleSportType(type) { 
+            const idx = appState.formData.sportTypes.indexOf(type); 
+            if (idx > -1) appState.formData.sportTypes.splice(idx, 1); 
+            else appState.formData.sportTypes.push(type); 
+            renderApp(); 
+        }
         function setSportDuration(dur) { appState.formData.sportDuration = dur; renderApp(); }
-        function addSportActivity() {
-            appState.formData.sportActivities.push({ type: '', duration: '' });
-            renderApp();
-        }
-        function removeSportActivity(index) {
-            appState.formData.sportActivities.splice(index, 1);
-            renderApp();
-        }
-        function updateSportActivity(index, field, value) {
-            appState.formData.sportActivities[index][field] = value;
-            renderApp();
-        }
         function setSport(val) { 
             appState.formData.sport = val; 
-            if (!val) {
-                appState.formData.sportActivities = [];
-            } else if (appState.formData.sportActivities.length === 0) {
-                appState.formData.sportActivities = [{ type: '', duration: '' }];
-            }
+            if (!val) { 
+                appState.formData.sportTypes = []; 
+                appState.formData.sportDuration = null; 
+            } 
             renderApp(); 
         }
         function setFormField(field, value) { appState.formData[field] = value; renderApp(); }
@@ -181,14 +168,14 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
         }
 
         function isFormComplete() {
-            const sportComplete = appState.formData.sport === false || (appState.formData.sport === true && appState.formData.sportActivities.length > 0 && appState.formData.sportActivities.every(a => a.type && a.duration));
+            const sportComplete = appState.formData.sport === false || (appState.formData.sport === true && appState.formData.sportTypes.length > 0 && appState.formData.sportDuration !== null);
             return appState.formData.dayRating !== null && appState.formData.stress !== null && sportComplete && appState.formData.smoking !== null && appState.formData.alcohol !== null && appState.formData.food !== null && appState.formData.iceBath !== null && appState.formData.healthy !== null && appState.formData.floss !== null && appState.formData.reading !== null && appState.formData.carbs !== null && appState.formData.protein !== null && appState.formData.sauna !== null;
         }
 
         function handleSubmit() {
             if (!isFormComplete()) return alert('Bitte beantworte alle Fragen!');
             
-            const dateToSave = appState.selectedDate; // Datum sichern!
+            const dateToSave = appState.selectedDate;
             
             const points = (appState.formData.sport ? 1 : 0) + (!appState.formData.smoking ? 1 : 0) + (!appState.formData.alcohol ? 1 : 0) + (appState.formData.food ? 1 : 0);
             const entry = {
@@ -213,74 +200,173 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
                 timestamp: new Date().toISOString()
             };
             
-            // Entferne alten Eintrag für dieses Datum
             appState.entries = appState.entries.filter(e => e.date !== dateToSave);
             appState.entries.push(entry);
             appState.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
             localStorage.setItem('healthEntries', JSON.stringify(appState.entries));
             
-            // WICHTIG: Formular komplett zurücksetzen UND Datum auf heute
             appState.selectedDate = new Date().toISOString().split('T')[0];
             appState.formData = { dayRating: null, stress: null, sport: null, sportTypes: [], sportDuration: null, smoking: null, alcohol: null, food: null, iceBath: null, healthy: null, floss: null, reading: null, carbs: null, protein: null, sauna: null, weight: null };
             
-            // Erfolgs-Nachricht mit Debug-Info
-            alert(`✅ Eintrag gespeichert!\n\nDatum: ${new Date(dateToSave).toLocaleDateString('de-DE')}\nPunkte: ${points}\nRating: ${appState.formData.dayRating || '?'}`);
-            
+            showToast(`✅ Eintrag gespeichert!`);
             renderApp();
         }
 
         function exportData() {
-            const csv = ['Datum,Tagesbewertung,Stress,Sport,Sportarten,Dauer,Nicht geraucht,Kein Alkohol,Gesund gegessen,Eisbad,Gesund,Zahnpflege,Gelesen,Carbs,Protein,Sauna,Gewicht,Punkte,Zeitstempel',
-                ...appState.entries.map(e => `${e.date},${e.dayRating || ''},${e.stress || ''},${e.sport ? 'Ja' : 'Nein'},"${(e.sportTypes || []).join(';')}",${e.sportDuration || ''},${e.noSmoking ? 'Ja' : 'Nein'},${e.noAlcohol ? 'Ja' : 'Nein'},${e.healthyFood ? 'Ja' : 'Nein'},${e.iceBath ? 'Ja' : 'Nein'},${e.healthy ? 'Ja' : 'Nein'},${e.floss ? 'Ja' : 'Nein'},${e.reading ? 'Ja' : 'Nein'},${e.carbs || ''},${e.protein || ''},${e.sauna ? 'Ja' : 'Nein'},${e.weight || ''},${e.points},${e.timestamp || ''}`)
-            ].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
+            if (appState.entries.length === 0) {
+                alert('⚠️ Keine Daten zum Exportieren vorhanden!');
+                return;
+            }
+            const dataStr = JSON.stringify(appState.entries, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `health_${new Date().toISOString().split('T')[0]}.csv`;
+            a.href = url;
+            a.download = `health-backup-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
+            showToast('✅ Backup erstellt!');
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json,.csv';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        let imported = [];
+                        
+                        if (file.name.endsWith('.json')) {
+                            imported = JSON.parse(event.target.result);
+                            if (!Array.isArray(imported)) throw new Error('Ungültiges JSON-Format');
+                        } else if (file.name.endsWith('.csv')) {
+                            const lines = event.target.result.split('\n');
+                            for (let i = 1; i < lines.length; i++) {
+                                if (!lines[i].trim()) continue;
+                                const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
+                                const cleanValues = values.map(v => v.replace(/^"|"$/g, '').trim());
+                                if (cleanValues.length < 10) continue;
+                                
+                                const entry = {
+                                    date: cleanValues[0],
+                                    dayRating: parseInt(cleanValues[1]) || null,
+                                    stress: parseInt(cleanValues[2]) || null,
+                                    sport: cleanValues[3] === 'Ja',
+                                    sportTypes: cleanValues[4] ? cleanValues[4].split(';').filter(t => t) : [],
+                                    sportDuration: cleanValues[5] || null,
+                                    noSmoking: cleanValues[6] === 'Ja',
+                                    noAlcohol: cleanValues[7] === 'Ja',
+                                    healthyFood: cleanValues[8] === 'Ja',
+                                    iceBath: cleanValues[9] === 'Ja',
+                                    healthy: cleanValues[10] === 'Ja',
+                                    floss: cleanValues[11] === 'Ja',
+                                    reading: cleanValues[12] === 'Ja',
+                                    sauna: cleanValues[13] === 'Ja',
+                                    carbs: cleanValues[14] || null,
+                                    protein: cleanValues[15] || null,
+                                    weight: cleanValues[16] ? parseFloat(cleanValues[16]) : null,
+                                    points: parseInt(cleanValues[17]) || 0,
+                                    timestamp: cleanValues[18] || new Date().toISOString()
+                                };
+                                imported.push(entry);
+                            }
+                        }
+                        
+                        if (imported.length === 0) throw new Error('Keine Daten gefunden');
+                        
+                        const merge = confirm(`📥 ${imported.length} Einträge gefunden!\n\nZusammenführen? (OK)\nÜberschreiben? (Abbrechen)`);
+                        
+                        if (merge) {
+                            imported.forEach(newEntry => {
+                                const existingIndex = appState.entries.findIndex(e => e.date === newEntry.date);
+                                if (existingIndex >= 0) appState.entries[existingIndex] = newEntry;
+                                else appState.entries.push(newEntry);
+                            });
+                        } else {
+                            if (!confirm('⚠️ ALLE Daten löschen?')) return;
+                            appState.entries = imported;
+                        }
+                        
+                        appState.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                        localStorage.setItem('healthEntries', JSON.stringify(appState.entries));
+                        renderApp();
+                        showToast(`✅ ${imported.length} Einträge importiert!`);
+                    } catch (error) {
+                        alert('❌ Import-Fehler: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
         }
 
         function toggleHistory() { appState.showHistory = !appState.showHistory; renderApp(); }
         function toggleViz() { appState.showViz = !appState.showViz; renderApp(); }
-        function changeVizMonth(delta) { appState.vizMonth += delta; if (appState.vizMonth < 0) { appState.vizMonth = 11; appState.vizYear--; } else if (appState.vizMonth > 11) { appState.vizMonth = 0; appState.vizYear++; } renderApp(); }
-        function showDayModal(date) { const entry = appState.entries.find(e => e.date === date); if (!entry) return; appState.modalEntry = entry; renderApp(); }
+        function changeVizMonth(delta) { 
+            appState.vizMonth += delta; 
+            if (appState.vizMonth < 0) { appState.vizMonth = 11; appState.vizYear--; } 
+            else if (appState.vizMonth > 11) { appState.vizMonth = 0; appState.vizYear++; }
+            if (appState.vizYear < 2026 || (appState.vizYear === 2026 && appState.vizMonth < 0)) { appState.vizMonth = 0; appState.vizYear = 2026; }
+            renderApp(); 
+        }
+        function showDayModal(date) { appState.modalEntry = appState.entries.find(e => e.date === date); renderApp(); }
         function closeModal() { 
             appState.modalEntry = null; 
             const existing = document.querySelector('.modal-overlay');
             if (existing) existing.remove();
             renderApp(); 
         }
-        function editEntry(date) { appState.selectedDate = date; loadEntryForDate(); window.scrollTo({ top: 0, behavior: 'smooth' }); renderApp(); }
+        function editEntry(date) { 
+            appState.selectedDate = date; 
+            loadEntryForDate(); 
+            window.scrollTo({ top: 0, behavior: 'smooth' }); 
+            renderApp(); 
+        }
 
         function renderApp() {
-            // Entries NEU aus localStorage laden um sicherzustellen dass wir die aktuellsten Daten haben
             appState.entries = JSON.parse(localStorage.getItem('healthEntries') || '[]');
             
-            const yr = new Date().getFullYear();
-            const ye = appState.entries.filter(e => new Date(e.date).getFullYear() === yr);
+            const ye2026 = appState.entries.filter(e => new Date(e.date).getFullYear() === 2026);
+            const l7 = appState.entries.slice(0, 7);
             const stats = {
                 total: appState.entries.length > 0 ? (appState.entries.reduce((s, e) => s + e.points, 0) / appState.entries.length).toFixed(1) : 0,
-                week: (() => { const l7 = appState.entries.slice(0, 7); return l7.length > 0 ? (l7.reduce((s, e) => s + e.points, 0) / l7.length).toFixed(1) : 0; })(),
-                yearRating: (() => { const yRat = ye.filter(e => e.dayRating); return yRat.length > 0 ? (yRat.reduce((s, e) => s + e.dayRating, 0) / yRat.length).toFixed(1) : 0; })()
+                week: l7.length > 0 ? (l7.reduce((s, e) => s + e.points, 0) / l7.length).toFixed(1) : 0,
+                year2026: ye2026.length > 0 ? (ye2026.reduce((s, e) => s + e.points, 0) / ye2026.length).toFixed(1) : 0
             };
 
-            const getYS = (f, neg = false) => { const y = ye.filter(e => e[f] === !neg).length; const n = ye.filter(e => e[f] === neg).length; return { yes: y, no: n, percent: ye.length > 0 ? ((y / ye.length) * 100).toFixed(0) : 0 }; };
-            const yearStats = { sport: getYS('sport'), noSmoking: getYS('noSmoking'), noAlcohol: getYS('noAlcohol'), healthyFood: getYS('healthyFood'), iceBath: getYS('iceBath'), healthy: getYS('healthy'), floss: getYS('floss'), reading: getYS('reading'), sauna: getYS('sauna') };
+            const getYS = (f, neg = false) => { 
+                const y = ye2026.filter(e => e[f] === !neg).length; 
+                const n = ye2026.filter(e => e[f] === neg).length; 
+                return { yes: y, no: n, percent: ye2026.length > 0 ? ((y / ye2026.length) * 100).toFixed(0) : 0 }; 
+            };
+            const yearStats = { 
+                sport: getYS('sport'), 
+                noSmoking: getYS('noSmoking'), 
+                noAlcohol: getYS('noAlcohol'), 
+                healthyFood: getYS('healthyFood'), 
+                iceBath: getYS('iceBath'), 
+                healthy: getYS('healthy'), 
+                floss: getYS('floss'), 
+                reading: getYS('reading'), 
+                sauna: getYS('sauna') 
+            };
 
             const getMonthDays = (o) => {
-                // WICHTIG: Verwende die aktuellen Entries aus appState
-                const currentEntries = appState.entries;
-                
                 let m = appState.vizMonth + o, y = appState.vizYear;
-                if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
+                if (m < 0) { m = 11; y--; } 
+                else if (m > 11) { m = 0; y++; }
                 const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
                 const offset = first.getDay() === 0 ? 6 : first.getDay() - 1;
                 const days = [];
                 for (let i = 0; i < offset; i++) days.push({ empty: true });
                 for (let d = 1; d <= last.getDate(); d++) {
-                    // Datum-String direkt erstellen ohne Timezone-Probleme
                     const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    const entry = currentEntries.find(e => e.date === dateStr);
+                    const entry = appState.entries.find(e => e.date === dateStr);
                     days.push({ date: dateStr, day: d, entry, points: entry?.points, rating: entry?.dayRating });
                 }
                 return { days, month: m, year: y };
@@ -308,11 +394,14 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
 
             document.getElementById('app').innerHTML = `
                 <div class="card">
-                    <div class="header"><div class="title">🏃 Health Tracker</div></div>
+                    <div class="header">
+                        <div class="title">🏃 Health Tracker</div>
+                        <div style="font-size:0.85rem;color:#22c55e;font-weight:600">💾 Lokal</div>
+                    </div>
                     <div class="stats">
                         <div class="stat-box green"><div class="stat-label">Gesamt-Ø</div><div class="stat-value green">${stats.total}</div><div class="stat-sub">von 4 Pkt</div></div>
                         <div class="stat-box blue"><div class="stat-label">7-Tage-Ø</div><div class="stat-value blue">${stats.week}</div><div class="stat-sub">letzte Woche</div></div>
-                        <div class="stat-box orange"><div class="stat-label">⭐ 2026</div><div class="stat-value orange">${stats.yearRating}</div><div class="stat-sub">Ø Bewertung</div></div>
+                        <div class="stat-box orange"><div class="stat-label">2026-Ø</div><div class="stat-value orange">${stats.year2026}</div><div class="stat-sub">von 4 Pkt</div></div>
                     </div>
                 </div>
 
@@ -336,23 +425,7 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
 
                     <div class="questions">
                         <div class="question-row"><div class="emoji">🏃</div><div class="question-label">Sport</div><div class="buttons"><button onclick="setSport(true)" class="q-btn ${appState.formData.sport === true ? 'green' : ''}">✅</button><button onclick="setSport(false)" class="q-btn ${appState.formData.sport === false ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.sport.percent}% <span class="stats-count"><span class="good">${yearStats.sport.yes}</span>/<span class="bad">${yearStats.sport.no}</span></span></div></div>
-                        ${appState.formData.sport === true ? `<div class="sport-details">
-                            <div style="font-size:0.7rem;font-weight:600;margin-bottom:0.5rem">Aktivitäten (mit je eigener Zeit):</div>
-                            ${appState.formData.sportActivities.map((activity, i) => `
-                                <div class="sport-activity">
-                                    <select onchange="updateSportActivity(${i},'type',this.value)" class="sport-type-select">
-                                        <option value="">Wähle Sportart...</option>
-                                        ${['Rudern','Laufen','Kraftsport','Dehnen','Wandern','Schwimmen'].map(t => `<option value="${t}" ${activity.type === t ? 'selected' : ''}>${t}</option>`).join('')}
-                                    </select>
-                                    <select onchange="updateSportActivity(${i},'duration',this.value)" class="sport-duration-select">
-                                        <option value="">Zeit...</option>
-                                        ${['15min','30min','45min','1h','1h15','1h30','1h45','2h'].map(d => `<option value="${d}" ${activity.duration === d ? 'selected' : ''}>${d}</option>`).join('')}
-                                    </select>
-                                    <button onclick="removeSportActivity(${i})" class="sport-remove-btn">✕</button>
-                                </div>
-                            `).join('')}
-                            <button onclick="addSportActivity()" class="sport-add-btn">+ Aktivität hinzufügen</button>
-                        </div>` : ''}
+                        ${appState.formData.sport === true ? `<div class="sport-details"><div style="font-size:0.7rem;font-weight:600;margin-bottom:0.3rem">Art (Mehrfachauswahl):</div><div class="sport-types">${['Rudern','Laufen','Kraftsport','Dehnen','Wandern','Schwimmen'].map(t => `<button onclick="toggleSportType('${t}')" class="sport-type-btn ${appState.formData.sportTypes.includes(t) ? 'selected' : ''}">${t}</button>`).join('')}</div><div style="font-size:0.7rem;font-weight:600;margin:0.5rem 0 0.3rem">Dauer:</div><div class="duration-grid">${['15min','30min','45min','1h','1h15','1h30','1h45','2h'].map(d => `<button onclick="setSportDuration('${d}')" class="duration-btn ${appState.formData.sportDuration === d ? 'selected' : ''}">${d}</button>`).join('')}</div></div>` : ''}
                         <div class="question-row"><div class="emoji">🚭</div><div class="question-label">Kein Rauchen</div><div class="buttons"><button onclick="setFormField('smoking',false)" class="q-btn ${appState.formData.smoking === false ? 'green' : ''}">✅</button><button onclick="setFormField('smoking',true)" class="q-btn ${appState.formData.smoking === true ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.noSmoking.percent}% <span class="stats-count"><span class="good">${yearStats.noSmoking.yes}</span>/<span class="bad">${yearStats.noSmoking.no}</span></span></div></div>
                         <div class="question-row"><div class="emoji">🍺</div><div class="question-label">Kein Alkohol</div><div class="buttons"><button onclick="setFormField('alcohol',false)" class="q-btn ${appState.formData.alcohol === false ? 'green' : ''}">✅</button><button onclick="setFormField('alcohol',true)" class="q-btn ${appState.formData.alcohol === true ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.noAlcohol.percent}% <span class="stats-count"><span class="good">${yearStats.noAlcohol.yes}</span>/<span class="bad">${yearStats.noAlcohol.no}</span></span></div></div>
                         <div class="question-row"><div class="emoji">🥗</div><div class="question-label">Ernährung</div><div class="buttons"><button onclick="setFormField('food',true)" class="q-btn ${appState.formData.food === true ? 'green' : ''}">✅</button><button onclick="setFormField('food',false)" class="q-btn ${appState.formData.food === false ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.healthyFood.percent}% <span class="stats-count"><span class="good">${yearStats.healthyFood.yes}</span>/<span class="bad">${yearStats.healthyFood.no}</span></span></div></div>
@@ -363,13 +436,13 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
                         <div class="question-row faded"><div class="emoji">💪</div><div class="question-label">Gesund</div><div class="buttons"><button onclick="setFormField('healthy',true)" class="q-btn ${appState.formData.healthy === true ? 'green' : ''}">✅</button><button onclick="setFormField('healthy',false)" class="q-btn ${appState.formData.healthy === false ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.healthy.percent}% <span class="stats-count"><span class="good">${yearStats.healthy.yes}</span>/<span class="bad">${yearStats.healthy.no}</span></span></div></div>
                         <div class="question-row faded"><div class="emoji">🦷</div><div class="question-label">Zahnpflege</div><div class="buttons"><button onclick="setFormField('floss',true)" class="q-btn ${appState.formData.floss === true ? 'green' : ''}">✅</button><button onclick="setFormField('floss',false)" class="q-btn ${appState.formData.floss === false ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.floss.percent}% <span class="stats-count"><span class="good">${yearStats.floss.yes}</span>/<span class="bad">${yearStats.floss.no}</span></span></div></div>
                         <div class="question-row faded"><div class="emoji">📖</div><div class="question-label">Lesen</div><div class="buttons"><button onclick="setFormField('reading',true)" class="q-btn ${appState.formData.reading === true ? 'green' : ''}">✅</button><button onclick="setFormField('reading',false)" class="q-btn ${appState.formData.reading === false ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.reading.percent}% <span class="stats-count"><span class="good">${yearStats.reading.yes}</span>/<span class="bad">${yearStats.reading.no}</span></span></div></div>
-                        <div class="question-row faded"><div class="emoji">🧖</div><div class="question-label">Sauna</div><div class="buttons"><button onclick="setFormField('sauna',true)" class="q-btn ${appState.formData.sauna === true ? 'green' : ''}">✅</button><button onclick="setFormField('sauna',false)" class="q-btn ${appState.formData.sauna === false ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.sauna ? `${yearStats.sauna.percent}% <span class="stats-count"><span class="good">${yearStats.sauna.yes}</span>/<span class="bad">${yearStats.sauna.no}</span></span>` : '0%'}</div></div>
+                        <div class="question-row faded"><div class="emoji">🧖</div><div class="question-label">Sauna</div><div class="buttons"><button onclick="setFormField('sauna',true)" class="q-btn ${appState.formData.sauna === true ? 'green' : ''}">✅</button><button onclick="setFormField('sauna',false)" class="q-btn ${appState.formData.sauna === false ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.sauna.percent}% <span class="stats-count"><span class="good">${yearStats.sauna.yes}</span>/<span class="bad">${yearStats.sauna.no}</span></span></div></div>
                         
                         <div style="border-top:2px solid #e5e7eb;margin:1rem 0"></div>
                         
                         <div class="question-row faded"><div class="emoji">🍞</div><div class="question-label">Carbs</div><div class="buttons"><button onclick="setFormField('carbs','low')" class="q-btn ${appState.formData.carbs === 'low' ? 'low' : ''}">Low</button><button onclick="setFormField('carbs','medium')" class="q-btn ${appState.formData.carbs === 'medium' ? 'medium' : ''}">Med</button><button onclick="setFormField('carbs','high')" class="q-btn ${appState.formData.carbs === 'high' ? 'high' : ''}">High</button></div><div class="stats-mini">-</div></div>
                         <div class="question-row faded"><div class="emoji">🥩</div><div class="question-label">Protein</div><div class="buttons"><button onclick="setFormField('protein','low')" class="q-btn ${appState.formData.protein === 'low' ? 'prot-low' : ''}">Low</button><button onclick="setFormField('protein','medium')" class="q-btn ${appState.formData.protein === 'medium' ? 'prot-med' : ''}">Med</button><button onclick="setFormField('protein','high')" class="q-btn ${appState.formData.protein === 'high' ? 'prot-high' : ''}">High</button></div><div class="stats-mini">-</div></div>
-                        <div class="question-row faded"><div class="emoji">🧖</div><div class="question-label">Sauna</div><div class="buttons"><button onclick="setFormField('sauna',true)" class="q-btn ${appState.formData.sauna === true ? 'green' : ''}">✅</button><button onclick="setFormField('sauna',false)" class="q-btn ${appState.formData.sauna === false ? 'red' : ''}">❌</button></div><div class="stats-mini">${yearStats.sauna ? `${yearStats.sauna.percent}% <span class="stats-count"><span class="good">${yearStats.sauna.yes}</span>/<span class="bad">${yearStats.sauna.no}</span></span>` : '0%'}</div></div>
+                        
                         <div class="hint">🧊, 💪, 🦷, 📖, 🍞, 🥩 und 🧖 zählen nicht in Punkte</div>
                     </div>
 
@@ -385,19 +458,17 @@ appState.entries = appState.entries.filter(e<!DOCTYPE html>
                 ${appState.showViz ? `<div class="card"><div class="viz-month-nav"><button onclick="changeVizMonth(-1)" class="viz-nav-btn" ${appState.vizYear === 2026 && appState.vizMonth === 0 ? 'disabled' : ''}>◀ Zurück</button><div></div><button onclick="changeVizMonth(1)" class="viz-nav-btn" ${appState.vizYear === new Date().getFullYear() && appState.vizMonth === new Date().getMonth() ? 'disabled' : ''}>Vor ▶</button></div>${[-1,0,1].map(o => { const md = getMonthDays(o); if (md.year < 2026) return ''; const st = getMonthStats(md); return `<div class="viz-month-container"><div class="viz-month-title"><div class="viz-month-title-main">${monthNames[md.month]} ${md.year}</div><div class="viz-month-stats"><span style="color:#16a34a">${st.avg}</span><span style="color:${getTrendColor(st.trend)};font-size:1.2rem">${getTrendIcon(st.trend)}</span></div></div><div class="viz-weekdays">${['Mo','Di','Mi','Do','Fr','Sa','So'].map(d => `<div class="viz-weekday">${d}</div>`).join('')}</div><div class="viz-grid">${md.days.map(d => d.empty ? '<div></div>' : `<div class="viz-day" style="background:${getDayColor(d.points)};color:#374151" onclick="showDayModal('${d.date}')"><div class="viz-day-number">${d.day}</div>${d.rating ? `<div class="viz-day-emoji">${getRatingEmoji(d.rating)}</div>` : ''}</div>`).join('')}</div></div>`; }).join('')}<div class="viz-legend">${[{c:'#86efac',t:'4'},{c:'#bef264',t:'3'},{c:'#fef08a',t:'2'},{c:'#fed7aa',t:'1'},{c:'#fecaca',t:'0'},{c:'#f3f4f6',t:'-'}].map(l => `<div class="viz-legend-item"><div class="viz-legend-box" style="background:${l.c}"></div><span>${l.t}</span></div>`).join('')}</div></div>` : ''}
 
                 <button onclick="toggleHistory()" class="btn-toggle"><div>📅 Verlauf (${appState.entries.length})</div><span>${appState.showHistory ? '▼' : '▶'}</span></button>
-                ${appState.showHistory ? `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:0.75rem"><h2 style="font-size:1rem;font-weight:bold">Alle Einträge</h2><button onclick="exportData()" style="color:#3b82f6;font-weight:600;background:none;border:none;cursor:pointer">Export</button></div>${appState.entries.map(e => `<div style="border:2px solid #f3f4f6;border-radius:0.5rem;padding:0.625rem;margin-bottom:0.5rem"><div style="display:flex;justify-content:space-between"><div style="font-weight:600;font-size:0.875rem">${new Date(e.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})} ${e.dayRating ? `⭐${e.dayRating}` : ''} ${e.stress ? `😰${e.stress}` : ''}</div><div style="display:flex;gap:0.5rem;align-items:center"><div style="font-size:1.25rem;font-weight:bold;color:#16a34a">${e.points}</div><button onclick="editEntry('${e.date}')" style="color:#3b82f6;background:none;border:none;cursor:pointer">✏️</button></div></div><div style="display:flex;gap:0.5rem;font-size:0.75rem;margin-top:0.375rem">${e.sport ? '🏃✅' : '🏃❌'} ${e.noSmoking ? '🚭✅' : '🚭❌'} ${e.noAlcohol ? '🍺✅' : '🍺❌'} ${e.healthyFood ? '🥗✅' : '🥗❌'} ${e.iceBath ? '🧊✅' : '🧊❌'} ${e.healthy ? '💪✅' : '💪❌'} ${e.floss ? '🦷✅' : '🦷❌'} ${e.reading ? '📖✅' : '📖❌'} ${e.sauna ? '🧖✅' : '🧖❌'}</div></div>`).join('')}</div>` : ''}
+                ${appState.showHistory ? `<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:0.75rem"><h2 style="font-size:1rem;font-weight:bold">Alle Einträge</h2><div style="display:flex;gap:0.5rem"><button onclick="importData()" style="color:#22c55e;font-weight:600;background:none;border:none;cursor:pointer">📥 Import</button><button onclick="exportData()" style="color:#3b82f6;font-weight:600;background:none;border:none;cursor:pointer">📤 Export</button></div></div>${appState.entries.map(e => `<div style="border:2px solid #f3f4f6;border-radius:0.5rem;padding:0.625rem;margin-bottom:0.5rem"><div style="display:flex;justify-content:space-between"><div style="font-weight:600;font-size:0.875rem">${new Date(e.date).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})} ${e.dayRating ? `⭐${e.dayRating}` : ''} ${e.stress ? `😰${e.stress}` : ''}</div><div style="display:flex;gap:0.5rem;align-items:center"><div style="font-size:1.25rem;font-weight:bold;color:#16a34a">${e.points}</div><button onclick="editEntry('${e.date}')" style="color:#3b82f6;background:none;border:none;cursor:pointer">✏️</button></div></div><div style="display:flex;gap:0.5rem;font-size:0.75rem;margin-top:0.375rem">${e.sport ? '🏃✅' : '🏃❌'} ${e.noSmoking ? '🚭✅' : '🚭❌'} ${e.noAlcohol ? '🍺✅' : '🍺❌'} ${e.healthyFood ? '🥗✅' : '🥗❌'} ${e.iceBath ? '🧊✅' : '🧊❌'} ${e.healthy ? '💪✅' : '💪❌'} ${e.floss ? '🦷✅' : '🦷❌'} ${e.reading ? '📖✅' : '📖❌'} ${e.sauna ? '🧖✅' : '🧖❌'}</div></div>`).join('')}</div>` : ''}
             `;
 
             if (appState.modalEntry) {
                 const modal = document.createElement('div');
                 modal.className = 'modal-overlay';
-                modal.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header"><div class="modal-title">${new Date(appState.modalEntry.date).toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}</div><button class="modal-close" id="closeBtn">✕</button></div><div class="modal-section"><div class="modal-section-title">⭐ Tagesbewertung</div><div style="font-size:2rem">${getRatingEmoji(appState.modalEntry.dayRating)} ${appState.modalEntry.dayRating || '?'}/5</div></div>${appState.modalEntry.stress ? `<div class="modal-section"><div class="modal-section-title">😰 Stress</div><div style="font-size:2rem">${getStressEmoji(appState.modalEntry.stress)} ${appState.modalEntry.stress}/4</div></div>` : ''}<div class="modal-section"><div class="modal-section-title">💪 Punktefragen (${appState.modalEntry.points}/4)</div><div class="modal-items"><div class="modal-item" style="color:${appState.modalEntry.sport ? '#16a34a' : '#ef4444'}">🏃 ${appState.modalEntry.sport ? '✅' : '❌'} Sport ${appState.modalEntry.sportTypes?.length ? `(${appState.modalEntry.sportTypes.join(', ')})` : ''} ${appState.modalEntry.sportDuration || ''}</div><div class="modal-item" style="color:${appState.modalEntry.noSmoking ? '#16a34a' : '#ef4444'}">🚭 ${appState.modalEntry.noSmoking ? '✅' : '❌'}</div><div class="modal-item" style="color:${appState.modalEntry.noAlcohol ? '#16a34a' : '#ef4444'}">🍺 ${appState.modalEntry.noAlcohol ? '✅' : '❌'}</div><div class="modal-item" style="color:${appState.modalEntry.healthyFood ? '#16a34a' : '#ef4444'}">🥗 ${appState.modalEntry.healthyFood ? '✅' : '❌'}</div></div></div>                        <div class="modal-section"><div class="modal-section-title">📋 Zusatz</div><div class="modal-items"><div class="modal-item">🧊 ${appState.modalEntry.iceBath ? '✅' : '❌'}</div><div class="modal-item">💪 ${appState.modalEntry.healthy ? 'Gesund' : 'Krank'}</div><div class="modal-item">🦷 ${appState.modalEntry.floss ? '✅' : '❌'}</div><div class="modal-item">📖 ${appState.modalEntry.reading ? '✅' : '❌'}</div><div class="modal-item">🍞 ${appState.modalEntry.carbs || '?'}</div><div class="modal-item" style="color:${appState.modalEntry.protein === 'low' ? '#ef4444' : appState.modalEntry.protein === 'medium' ? '#f59e0b' : appState.modalEntry.protein === 'high' ? '#22c55e' : '#9ca3af'}">🥩 ${appState.modalEntry.protein || '?'}</div><div class="modal-item">🧖 ${appState.modalEntry.sauna ? '✅' : '❌'}</div>${appState.modalEntry.weight ? `<div class="modal-item">⚖️ ${appState.modalEntry.weight}kg</div>` : ''}</div></div><button id="editBtn" style="width:100%;background:#3b82f6;color:white;border:none;border-radius:0.5rem;padding:0.75rem;font-weight:600;cursor:pointer">✏️ Bearbeiten</button></div>`;
+                modal.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()"><div class="modal-header"><div class="modal-title">${new Date(appState.modalEntry.date).toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}</div><button class="modal-close" id="closeBtn">✕</button></div><div class="modal-section"><div class="modal-section-title">⭐ Tagesbewertung</div><div style="font-size:2rem">${getRatingEmoji(appState.modalEntry.dayRating)} ${appState.modalEntry.dayRating || '?'}/5</div></div>${appState.modalEntry.stress ? `<div class="modal-section"><div class="modal-section-title">😰 Stress</div><div style="font-size:2rem">${getStressEmoji(appState.modalEntry.stress)} ${appState.modalEntry.stress}/4</div></div>` : ''}<div class="modal-section"><div class="modal-section-title">💪 Punktefragen (${appState.modalEntry.points}/4)</div><div class="modal-items"><div class="modal-item" style="color:${appState.modalEntry.sport ? '#16a34a' : '#ef4444'}">🏃 ${appState.modalEntry.sport ? '✅' : '❌'} Sport ${appState.modalEntry.sportTypes?.length ? `(${appState.modalEntry.sportTypes.join(', ')})` : ''} ${appState.modalEntry.sportDuration || ''}</div><div class="modal-item" style="color:${appState.modalEntry.noSmoking ? '#16a34a' : '#ef4444'}">🚭 ${appState.modalEntry.noSmoking ? '✅' : '❌'}</div><div class="modal-item" style="color:${appState.modalEntry.noAlcohol ? '#16a34a' : '#ef4444'}">🍺 ${appState.modalEntry.noAlcohol ? '✅' : '❌'}</div><div class="modal-item" style="color:${appState.modalEntry.healthyFood ? '#16a34a' : '#ef4444'}">🥗 ${appState.modalEntry.healthyFood ? '✅' : '❌'}</div></div></div><div class="modal-section"><div class="modal-section-title">📋 Zusatz</div><div class="modal-items"><div class="modal-item">🧊 ${appState.modalEntry.iceBath ? '✅' : '❌'}</div><div class="modal-item">💪 ${appState.modalEntry.healthy ? 'Gesund' : 'Krank'}</div><div class="modal-item">🦷 ${appState.modalEntry.floss ? '✅' : '❌'}</div><div class="modal-item">📖 ${appState.modalEntry.reading ? '✅' : '❌'}</div><div class="modal-item">🍞 ${appState.modalEntry.carbs || '?'}</div><div class="modal-item" style="color:${appState.modalEntry.protein === 'low' ? '#ef4444' : appState.modalEntry.protein === 'medium' ? '#f59e0b' : appState.modalEntry.protein === 'high' ? '#22c55e' : '#9ca3af'}">🥩 ${appState.modalEntry.protein || '?'}</div><div class="modal-item">🧖 ${appState.modalEntry.sauna ? '✅' : '❌'}</div>${appState.modalEntry.weight ? `<div class="modal-item">⚖️ ${appState.modalEntry.weight}kg</div>` : ''}</div></div><button id="editBtn" style="width:100%;background:#3b82f6;color:white;border:none;border-radius:0.5rem;padding:0.75rem;font-weight:600;cursor:pointer">✏️ Bearbeiten</button></div>`;
                 document.body.appendChild(modal);
                 
                 modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        closeModal();
-                    }
+                    if (e.target === modal) closeModal();
                 });
                 
                 document.getElementById('closeBtn').addEventListener('click', function(e) {
