@@ -533,14 +533,40 @@
                     <div class="time-popup-display">${appState.timePopup.value} min</div>
                     <div class="time-popup-grid">
                         ${[1,2,3,4,5,6,7,8,9,'C',0,'✓'].map(d => {
-                            if (d === 'C') return '<button class="time-popup-btn" onclick="clearTime()" style="background:#fef2f2;color:#ef4444">⌫</button>';
-                            if (d === '✓') return '<button class="time-popup-btn" onclick="saveTime()" style="background:#dcfce7;color:#16a34a">✓</button>';
-                            return `<button class="time-popup-btn" onclick="addDigitToTime('${d}')">${d}</button>`;
+                            if (d === 'C') return '<button class="time-popup-btn clear-btn" style="background:#fef2f2;color:#ef4444">⌫</button>';
+                            if (d === '✓') return '<button class="time-popup-btn save-btn" style="background:#dcfce7;color:#16a34a">✓</button>';
+                            return `<button class="time-popup-btn digit-btn" data-digit="${d}">${d}</button>`;
                         }).join('')}
                     </div>
                 </div>`;
                 document.body.appendChild(tp);
                 tp.addEventListener('click', function(e) { if (e.target === tp) closeTimePopup(); });
+                
+                // Event Listener für Ziffern
+                tp.querySelectorAll('.digit-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        addDigitToTime(this.getAttribute('data-digit'));
+                    });
+                });
+                
+                // Event Listener für Clear Button
+                const clearBtn = tp.querySelector('.clear-btn');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        clearTime();
+                    });
+                }
+                
+                // Event Listener für Save Button
+                const saveBtn = tp.querySelector('.save-btn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        saveTime();
+                    });
+                }
             }
         }
 
