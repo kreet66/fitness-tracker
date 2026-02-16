@@ -104,9 +104,6 @@
         .time-popup-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
         .time-popup-btn { background: #f3f4f6; border: 2px solid #d1d5db; border-radius: 0.75rem; padding: 1rem; font-size: 1.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
         .time-popup-btn:active { transform: scale(0.95); background: #e5e7eb; }
-        .time-popup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-        .time-popup-clear { background: #ef4444; color: white; border: none; border-radius: 0.5rem; padding: 0.75rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
-        .time-popup-save { background: #22c55e; color: white; border: none; border-radius: 0.5rem; padding: 0.75rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -123,28 +120,12 @@
             })(),
             selectedDate: new Date().toISOString().split('T')[0],
             formData: { 
-                dayRating: null, 
-                stress: null, 
-                sport: null, 
-                sportActivities: {}, // Format: {type: minutes}
-                smoking: null, 
-                alcohol: null, 
-                food: null, 
-                iceBath: null, 
-                healthy: null, 
-                floss: null, 
-                reading: null, 
-                carbs: null, 
-                protein: null, 
-                sauna: null, 
-                weight: null 
+                dayRating: null, stress: null, sport: null, sportActivities: {},
+                smoking: null, alcohol: null, food: null, iceBath: null, healthy: null,
+                floss: null, reading: null, carbs: null, protein: null, sauna: null, weight: null 
             },
-            showHistory: false, 
-            showViz: true, 
-            vizMonth: 0, 
-            vizYear: 2026, 
-            modalEntry: null,
-            timePopup: null
+            showHistory: false, showViz: true, vizMonth: 0, vizYear: 2026, 
+            modalEntry: null, timePopup: null
         };
 
 ```
@@ -174,12 +155,13 @@
             type: type,
             value: (appState.formData.sportActivities[type] || 0).toString()
         };
-        renderApp();
+        renderTimePopup();
     }
 
     function closeTimePopup() {
+        const popup = document.querySelector('.time-popup-overlay');
+        if (popup) popup.remove();
         appState.timePopup = null;
-        renderApp();
     }
 
     function addDigitToTime(digit) {
@@ -187,14 +169,16 @@
         let newValue = appState.timePopup.value + digit;
         if (parseInt(newValue) <= 999) {
             appState.timePopup.value = parseInt(newValue).toString();
-            renderApp();
+            const display = document.querySelector('.time-popup-display');
+            if (display) display.textContent = appState.timePopup.value + ' min';
         }
     }
 
     function clearTime() {
         if (!appState.timePopup) return;
         appState.timePopup.value = '0';
-        renderApp();
+        const display = document.querySelector('.time-popup-display');
+        if (display) display.textContent = '0 min';
     }
 
     function saveTime() {
@@ -202,79 +186,98 @@
         const type = appState.timePopup.type;
         const value = parseInt(appState.timePopup.value) || 0;
         
-        // Popup ZUERST schließen
-        appState.timePopup = null;
+        closeTimePopup();
         
-        // Dann Wert speichern
         if (value > 0) {
             appState.formData.sportActivities[type] = value;
         } else {
             delete appState.formData.sportActivities[type];
         }
         
-        // Erst jetzt rendern
         renderApp();
+    }
+
+    function renderTimePopup() {
+        const existing = document.querySelector('.time-popup-overlay');
+        if (existing) existing.remove();
+        
+        if (!appState.timePopup) return;
+        
+        const tp = document.createElement('div');
+        tp.className = 'time-popup-overlay';
+        tp.innerHTML = `<div class="time-popup" onclick="event.stopPropagation()">
+            <div class="time-popup-header">
+                <div class="time-popup-title">⏱️ ${appState.timePopup.type}</div>
+                <div style="font-size:0.9rem;color:#6b7280">Minuten eingeben (0-999)</div>
+            </div>
+            <div class="time-popup-display">${appState.timePopup.value} min</div>
+            <div class="time-popup-grid">
+                ${[1,2,3,4,5,6,7,8,9,'C',0,'✓'].map(d => {
+                    if (d === 'C') return '<button class="time-popup-btn clear-btn" style="background:#fef2f2;color:#ef4444">⌫</button>';
+                    if (d === '✓') return '<button class="time-popup-btn save-btn" style="background:#dcfce7;color:#16a34a">✓</button>';
+                    return `<button class="time-popup-btn digit-btn" data-digit="${d}">${d}</button>`;
+                }).join('')}
+            </div>
+        </div>`;
+        document.body.appendChild(tp);
+        
+        tp.addEventListener('click', function(e) { if (e.target === tp) closeTimePopup(); });
+        
+        tp.querySelectorAll('.digit-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                addDigitToTime(this.getAttribute('data-digit'));
+            });
+        });
+        
+        const clearBtn = tp.querySelector('.clear-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                clearTime();
+            });
+        }
+        
+        const saveBtn = tp.querySelector('.save-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                saveTime();
+            });
+        }
     }
 
     function loadEntryForDate() {
         const e = appState.entries.find(e => e.date === appState.selectedDate);
         if (e) {
             let sportActs = {};
-            
-            // Neue Format (sportActivities als Object)
             if (e.sportActivities && typeof e.sportActivities === 'object' && !Array.isArray(e.sportActivities)) {
                 sportActs = {...e.sportActivities};
-            }
-            // Alte Formate konvertieren
-            else if (e.sportActivities && Array.isArray(e.sportActivities)) {
+            } else if (e.sportActivities && Array.isArray(e.sportActivities)) {
                 e.sportActivities.forEach(act => {
                     if (act.type && act.duration) {
                         const minutes = parseDuration(act.duration);
                         if (minutes > 0) sportActs[act.type] = minutes;
                     }
                 });
-            }
-            else if (e.sportTypes && Array.isArray(e.sportTypes)) {
+            } else if (e.sportTypes && Array.isArray(e.sportTypes)) {
                 const minutes = parseDuration(e.sportDuration || '30min');
                 e.sportTypes.forEach(type => {
                     sportActs[type] = minutes;
                 });
             }
-            
             appState.formData = { 
-                dayRating: e.dayRating||null, 
-                stress: e.stress||null, 
-                sport: e.sport, 
-                sportActivities: sportActs, 
-                smoking: !e.noSmoking, 
-                alcohol: !e.noAlcohol, 
-                food: e.healthyFood, 
-                iceBath: e.iceBath, 
-                healthy: e.healthy, 
-                floss: e.floss||null, 
-                reading: e.reading||null, 
-                carbs: e.carbs||null, 
-                protein: e.protein||null, 
-                sauna: e.sauna||null, 
-                weight: e.weight||null 
+                dayRating: e.dayRating||null, stress: e.stress||null, sport: e.sport, 
+                sportActivities: sportActs, smoking: !e.noSmoking, alcohol: !e.noAlcohol, 
+                food: e.healthyFood, iceBath: e.iceBath, healthy: e.healthy, 
+                floss: e.floss||null, reading: e.reading||null, carbs: e.carbs||null, 
+                protein: e.protein||null, sauna: e.sauna||null, weight: e.weight||null 
             };
         } else {
             appState.formData = { 
-                dayRating: null, 
-                stress: null, 
-                sport: null, 
-                sportActivities: {}, 
-                smoking: null, 
-                alcohol: null, 
-                food: null, 
-                iceBath: null, 
-                healthy: null, 
-                floss: null, 
-                reading: null, 
-                carbs: null, 
-                protein: null, 
-                sauna: null, 
-                weight: null 
+                dayRating: null, stress: null, sport: null, sportActivities: {}, 
+                smoking: null, alcohol: null, food: null, iceBath: null, healthy: null, 
+                floss: null, reading: null, carbs: null, protein: null, sauna: null, weight: null 
             };
         }
     }
@@ -293,20 +296,13 @@
                           (appState.formData.sport === true && 
                            Object.keys(appState.formData.sportActivities).length > 0 &&
                            Object.values(appState.formData.sportActivities).every(m => m > 0));
-        
         return appState.formData.dayRating !== null && 
-               appState.formData.stress !== null && 
-               sportValid && 
-               appState.formData.smoking !== null && 
-               appState.formData.alcohol !== null && 
-               appState.formData.food !== null && 
-               appState.formData.iceBath !== null && 
-               appState.formData.healthy !== null && 
-               appState.formData.floss !== null && 
-               appState.formData.reading !== null && 
-               appState.formData.carbs !== null && 
-               appState.formData.protein !== null && 
-               appState.formData.sauna !== null;
+               appState.formData.stress !== null && sportValid && 
+               appState.formData.smoking !== null && appState.formData.alcohol !== null && 
+               appState.formData.food !== null && appState.formData.iceBath !== null && 
+               appState.formData.healthy !== null && appState.formData.floss !== null && 
+               appState.formData.reading !== null && appState.formData.carbs !== null && 
+               appState.formData.protein !== null && appState.formData.sauna !== null;
     }
 
     function handleSubmit() {
@@ -314,24 +310,12 @@
         const dt = appState.selectedDate;
         const pts = (appState.formData.sport?1:0) + (!appState.formData.smoking?1:0) + (!appState.formData.alcohol?1:0) + (appState.formData.food?1:0);
         const entry = {
-            date: dt, 
-            dayRating: appState.formData.dayRating, 
-            stress: appState.formData.stress, 
-            sport: appState.formData.sport,
+            date: dt, dayRating: appState.formData.dayRating, stress: appState.formData.stress, sport: appState.formData.sport,
             sportActivities: appState.formData.sport ? {...appState.formData.sportActivities} : {},
-            noSmoking: !appState.formData.smoking, 
-            noAlcohol: !appState.formData.alcohol, 
-            healthyFood: appState.formData.food,
-            iceBath: appState.formData.iceBath, 
-            healthy: appState.formData.healthy, 
-            floss: appState.formData.floss, 
-            reading: appState.formData.reading,
-            carbs: appState.formData.carbs, 
-            protein: appState.formData.protein, 
-            sauna: appState.formData.sauna, 
-            weight: appState.formData.weight,
-            points: pts, 
-            timestamp: new Date().toISOString()
+            noSmoking: !appState.formData.smoking, noAlcohol: !appState.formData.alcohol, healthyFood: appState.formData.food,
+            iceBath: appState.formData.iceBath, healthy: appState.formData.healthy, floss: appState.formData.floss, 
+            reading: appState.formData.reading, carbs: appState.formData.carbs, protein: appState.formData.protein, 
+            sauna: appState.formData.sauna, weight: appState.formData.weight, points: pts, timestamp: new Date().toISOString()
         };
         appState.entries = appState.entries.filter(e => e.date !== dt);
         appState.entries.push(entry);
@@ -344,21 +328,9 @@
         }
         appState.selectedDate = new Date().toISOString().split('T')[0];
         appState.formData = { 
-            dayRating: null, 
-            stress: null, 
-            sport: null, 
-            sportActivities: {}, 
-            smoking: null, 
-            alcohol: null, 
-            food: null, 
-            iceBath: null, 
-            healthy: null, 
-            floss: null, 
-            reading: null, 
-            carbs: null, 
-            protein: null, 
-            sauna: null, 
-            weight: null 
+            dayRating: null, stress: null, sport: null, sportActivities: {}, 
+            smoking: null, alcohol: null, food: null, iceBath: null, healthy: null, 
+            floss: null, reading: null, carbs: null, protein: null, sauna: null, weight: null 
         };
         renderApp();
     }
@@ -369,14 +341,11 @@
                 let sp = '';
                 if (e.sportActivities) {
                     if (typeof e.sportActivities === 'object' && !Array.isArray(e.sportActivities)) {
-                        // Neues Format
                         sp = Object.entries(e.sportActivities).map(([type, min]) => `${type}: ${min}min`).join('; ');
                     } else if (Array.isArray(e.sportActivities)) {
-                        // Altes Array-Format
                         sp = e.sportActivities.map(a => `${a.type}: ${a.duration}`).join('; ');
                     }
                 } else if (e.sportTypes && Array.isArray(e.sportTypes)) {
-                    // Ganz altes Format
                     sp = `${e.sportTypes.join(', ')} (${e.sportDuration || 'Gesamt'})`;
                 }
                 return `${e.date},${e.dayRating||''},${e.stress||''},${e.sport?'Ja':'Nein'},"${sp}",${e.noSmoking?'Ja':'Nein'},${e.noAlcohol?'Ja':'Nein'},${e.healthyFood?'Ja':'Nein'},${e.iceBath?'Ja':'Nein'},${e.healthy?'Ja':'Nein'},${e.floss?'Ja':'Nein'},${e.reading?'Ja':'Nein'},${e.sauna?'Ja':'Nein'},${e.carbs||''},${e.protein||''},${e.weight||''},${e.points},${e.timestamp||''}`;
@@ -390,10 +359,30 @@
 
     function toggleHistory() { appState.showHistory = !appState.showHistory; renderApp(); }
     function toggleViz() { appState.showViz = !appState.showViz; renderApp(); }
-    function changeVizMonth(d) { appState.vizMonth += d; if (appState.vizMonth < 0) { appState.vizMonth = 11; appState.vizYear--; } else if (appState.vizMonth > 11) { appState.vizMonth = 0; appState.vizYear++; } renderApp(); }
-    function showDayModal(d) { const e = appState.entries.find(e => e.date === d); if (!e) return; appState.modalEntry = e; renderApp(); }
-    function closeModal() { appState.modalEntry = null; const m = document.querySelector('.modal-overlay'); if (m) m.remove(); renderApp(); }
-    function editEntry(d) { appState.selectedDate = d; loadEntryForDate(); window.scrollTo({top:0,behavior:'smooth'}); renderApp(); }
+    function changeVizMonth(d) { 
+        appState.vizMonth += d; 
+        if (appState.vizMonth < 0) { appState.vizMonth = 11; appState.vizYear--; } 
+        else if (appState.vizMonth > 11) { appState.vizMonth = 0; appState.vizYear++; } 
+        renderApp(); 
+    }
+    function showDayModal(d) { 
+        const e = appState.entries.find(e => e.date === d); 
+        if (!e) return; 
+        appState.modalEntry = e; 
+        renderApp(); 
+    }
+    function closeModal() { 
+        appState.modalEntry = null; 
+        const m = document.querySelector('.modal-overlay'); 
+        if (m) m.remove(); 
+        renderApp(); 
+    }
+    function editEntry(d) { 
+        appState.selectedDate = d; 
+        loadEntryForDate(); 
+        window.scrollTo({top:0,behavior:'smooth'}); 
+        renderApp(); 
+    }
 
     function formatSportActivities(sportActs) {
         if (!sportActs) return '';
@@ -414,11 +403,6 @@
             appState.entries = [];
         }
         
-        // Entferne alte Popups bevor neu gerendert wird
-        const oldTimePopup = document.querySelector('.time-popup-overlay');
-        if (oldTimePopup) oldTimePopup.remove();
-        const oldModal = document.querySelector('.modal-overlay');
-        if (oldModal) oldModal.remove();
         const yr = new Date().getFullYear();
         const ye = appState.entries.filter(e => new Date(e.date).getFullYear() === yr);
         const stats = {
@@ -536,56 +520,8 @@
             document.getElementById('closeBtn').addEventListener('click', function(e) { e.stopPropagation(); closeModal(); });
             document.getElementById('editBtn').addEventListener('click', function(e) { e.stopPropagation(); const d = appState.modalEntry.date; closeModal(); editEntry(d); });
         }
-
-        if (appState.timePopup) {
-            const tp = document.createElement('div');
-            tp.className = 'time-popup-overlay';
-            tp.innerHTML = `<div class="time-popup" onclick="event.stopPropagation()">
-                <div class="time-popup-header">
-                    <div class="time-popup-title">⏱️ ${appState.timePopup.type}</div>
-                    <div style="font-size:0.9rem;color:#6b7280">Minuten eingeben (0-999)</div>
-                </div>
-                <div class="time-popup-display">${appState.timePopup.value} min</div>
-                <div class="time-popup-grid">
-                    ${[1,2,3,4,5,6,7,8,9,'C',0,'✓'].map(d => {
-                        if (d === 'C') return '<button class="time-popup-btn clear-btn" style="background:#fef2f2;color:#ef4444">⌫</button>';
-                        if (d === '✓') return '<button class="time-popup-btn save-btn" style="background:#dcfce7;color:#16a34a">✓</button>';
-                        return `<button class="time-popup-btn digit-btn" data-digit="${d}">${d}</button>`;
-                    }).join('')}
-                </div>
-            </div>`;
-            document.body.appendChild(tp);
-            tp.addEventListener('click', function(e) { if (e.target === tp) closeTimePopup(); });
-            
-            // Event Listener für Ziffern
-            tp.querySelectorAll('.digit-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    addDigitToTime(this.getAttribute('data-digit'));
-                });
-            });
-            
-            // Event Listener für Clear Button
-            const clearBtn = tp.querySelector('.clear-btn');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    clearTime();
-                });
-            }
-            
-            // Event Listener für Save Button
-            const saveBtn = tp.querySelector('.save-btn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    saveTime();
-                });
-            }
-        }
     }
 
-    // Sicherstellen, dass DOM vollständig geladen ist
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             loadEntryForDate();
