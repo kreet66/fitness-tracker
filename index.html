@@ -50,8 +50,9 @@
         .sport-activity { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; padding: 0.3rem; background: white; border-radius: 0.35rem; border: 2px solid #e5e7eb; }
         .sport-checkbox { width: 1.2rem; height: 1.2rem; cursor: pointer; }
         .sport-label { flex: 1; font-weight: 600; font-size: 0.85rem; }
-        .sport-time-input { width: 4rem; text-align: center; font-size: 1.1rem; font-weight: 700; padding: 0.3rem; border: 2px solid #d1d5db; border-radius: 0.35rem; cursor: pointer; background: white; }
-        .sport-time-input:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+        .sport-time-input { width: 4.5rem; text-align: center; font-size: 1.1rem; font-weight: 700; padding: 0.4rem; border: 2px solid #3b82f6; border-radius: 0.35rem; background: white; }
+        .sport-time-input:disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; border-color: #d1d5db; }
+        .sport-time-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
         .sport-time-unit { font-size: 0.75rem; color: #6b7280; font-weight: 600; }
         .rating-box { margin: 0.75rem 0; padding: 1rem; border-radius: 0.75rem; }
         .rating-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
@@ -96,14 +97,6 @@
         .modal-section-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; }
         .modal-items { display: flex; flex-wrap: wrap; gap: 0.5rem; }
         .modal-item { font-size: 0.8rem; }
-        .time-popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .time-popup { background: white; border-radius: 1.5rem; padding: 1.5rem; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        .time-popup-header { text-align: center; margin-bottom: 1.5rem; }
-        .time-popup-title { font-size: 1.2rem; font-weight: bold; color: #1f2937; margin-bottom: 0.5rem; }
-        .time-popup-display { font-size: 4rem; font-weight: 900; color: #16a34a; text-align: center; margin-bottom: 1rem; }
-        .time-popup-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
-        .time-popup-btn { background: #f3f4f6; border: 2px solid #d1d5db; border-radius: 0.75rem; padding: 1rem; font-size: 1.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        .time-popup-btn:active { transform: scale(0.95); background: #e5e7eb; }
     </style>
 </head>
 <body>
@@ -120,12 +113,27 @@
             })(),
             selectedDate: new Date().toISOString().split('T')[0],
             formData: { 
-                dayRating: null, stress: null, sport: null, sportActivities: {},
-                smoking: null, alcohol: null, food: null, iceBath: null, healthy: null,
-                floss: null, reading: null, carbs: null, protein: null, sauna: null, weight: null 
+                dayRating: null, 
+                stress: null, 
+                sport: null, 
+                sportActivities: {}, // Format: {type: minutes}
+                smoking: null, 
+                alcohol: null, 
+                food: null, 
+                iceBath: null, 
+                healthy: null, 
+                floss: null, 
+                reading: null, 
+                carbs: null, 
+                protein: null, 
+                sauna: null, 
+                weight: null 
             },
-            showHistory: false, showViz: true, vizMonth: 0, vizYear: 2026, 
-            modalEntry: null, timePopup: null
+            showHistory: false, 
+            showViz: true, 
+            vizMonth: 0, 
+            vizYear: 2026, 
+            modalEntry: null
         };
 
 ```
@@ -150,100 +158,12 @@
         renderApp();
     }
 
-    function openTimePopup(type) {
-        appState.timePopup = {
-            type: type,
-            value: (appState.formData.sportActivities[type] || 0).toString()
-        };
-        renderTimePopup();
-    }
-
-    function closeTimePopup() {
-        const popup = document.querySelector('.time-popup-overlay');
-        if (popup) popup.remove();
-        appState.timePopup = null;
-    }
-
-    function addDigitToTime(digit) {
-        if (!appState.timePopup) return;
-        let newValue = appState.timePopup.value + digit;
-        if (parseInt(newValue) <= 999) {
-            appState.timePopup.value = parseInt(newValue).toString();
-            const display = document.querySelector('.time-popup-display');
-            if (display) display.textContent = appState.timePopup.value + ' min';
-        }
-    }
-
-    function clearTime() {
-        if (!appState.timePopup) return;
-        appState.timePopup.value = '0';
-        const display = document.querySelector('.time-popup-display');
-        if (display) display.textContent = '0 min';
-    }
-
-    function saveTime() {
-        if (!appState.timePopup) return;
-        const type = appState.timePopup.type;
-        const value = parseInt(appState.timePopup.value) || 0;
-        
-        closeTimePopup();
-        
-        if (value > 0) {
-            appState.formData.sportActivities[type] = value;
-        } else {
-            delete appState.formData.sportActivities[type];
-        }
-        
-        renderApp();
-    }
-
-    function renderTimePopup() {
-        const existing = document.querySelector('.time-popup-overlay');
-        if (existing) existing.remove();
-        
-        if (!appState.timePopup) return;
-        
-        const tp = document.createElement('div');
-        tp.className = 'time-popup-overlay';
-        tp.innerHTML = `<div class="time-popup" onclick="event.stopPropagation()">
-            <div class="time-popup-header">
-                <div class="time-popup-title">⏱️ ${appState.timePopup.type}</div>
-                <div style="font-size:0.9rem;color:#6b7280">Minuten eingeben (0-999)</div>
-            </div>
-            <div class="time-popup-display">${appState.timePopup.value} min</div>
-            <div class="time-popup-grid">
-                ${[1,2,3,4,5,6,7,8,9,'C',0,'✓'].map(d => {
-                    if (d === 'C') return '<button class="time-popup-btn clear-btn" style="background:#fef2f2;color:#ef4444">⌫</button>';
-                    if (d === '✓') return '<button class="time-popup-btn save-btn" style="background:#dcfce7;color:#16a34a">✓</button>';
-                    return `<button class="time-popup-btn digit-btn" data-digit="${d}">${d}</button>`;
-                }).join('')}
-            </div>
-        </div>`;
-        document.body.appendChild(tp);
-        
-        tp.addEventListener('click', function(e) { if (e.target === tp) closeTimePopup(); });
-        
-        tp.querySelectorAll('.digit-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                addDigitToTime(this.getAttribute('data-digit'));
-            });
-        });
-        
-        const clearBtn = tp.querySelector('.clear-btn');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                clearTime();
-            });
-        }
-        
-        const saveBtn = tp.querySelector('.save-btn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                saveTime();
-            });
+    function updateSportTime(type, value) {
+        const minutes = parseInt(value) || 0;
+        if (minutes > 0 && minutes <= 999) {
+            appState.formData.sportActivities[type] = minutes;
+        } else if (minutes === 0) {
+            appState.formData.sportActivities[type] = 0;
         }
     }
 
@@ -251,33 +171,61 @@
         const e = appState.entries.find(e => e.date === appState.selectedDate);
         if (e) {
             let sportActs = {};
+            
+            // Neue Format (sportActivities als Object)
             if (e.sportActivities && typeof e.sportActivities === 'object' && !Array.isArray(e.sportActivities)) {
                 sportActs = {...e.sportActivities};
-            } else if (e.sportActivities && Array.isArray(e.sportActivities)) {
+            }
+            // Alte Formate konvertieren
+            else if (e.sportActivities && Array.isArray(e.sportActivities)) {
                 e.sportActivities.forEach(act => {
                     if (act.type && act.duration) {
                         const minutes = parseDuration(act.duration);
                         if (minutes > 0) sportActs[act.type] = minutes;
                     }
                 });
-            } else if (e.sportTypes && Array.isArray(e.sportTypes)) {
+            }
+            else if (e.sportTypes && Array.isArray(e.sportTypes)) {
                 const minutes = parseDuration(e.sportDuration || '30min');
                 e.sportTypes.forEach(type => {
                     sportActs[type] = minutes;
                 });
             }
+            
             appState.formData = { 
-                dayRating: e.dayRating||null, stress: e.stress||null, sport: e.sport, 
-                sportActivities: sportActs, smoking: !e.noSmoking, alcohol: !e.noAlcohol, 
-                food: e.healthyFood, iceBath: e.iceBath, healthy: e.healthy, 
-                floss: e.floss||null, reading: e.reading||null, carbs: e.carbs||null, 
-                protein: e.protein||null, sauna: e.sauna||null, weight: e.weight||null 
+                dayRating: e.dayRating||null, 
+                stress: e.stress||null, 
+                sport: e.sport, 
+                sportActivities: sportActs, 
+                smoking: !e.noSmoking, 
+                alcohol: !e.noAlcohol, 
+                food: e.healthyFood, 
+                iceBath: e.iceBath, 
+                healthy: e.healthy, 
+                floss: e.floss||null, 
+                reading: e.reading||null, 
+                carbs: e.carbs||null, 
+                protein: e.protein||null, 
+                sauna: e.sauna||null, 
+                weight: e.weight||null 
             };
         } else {
             appState.formData = { 
-                dayRating: null, stress: null, sport: null, sportActivities: {}, 
-                smoking: null, alcohol: null, food: null, iceBath: null, healthy: null, 
-                floss: null, reading: null, carbs: null, protein: null, sauna: null, weight: null 
+                dayRating: null, 
+                stress: null, 
+                sport: null, 
+                sportActivities: {}, 
+                smoking: null, 
+                alcohol: null, 
+                food: null, 
+                iceBath: null, 
+                healthy: null, 
+                floss: null, 
+                reading: null, 
+                carbs: null, 
+                protein: null, 
+                sauna: null, 
+                weight: null 
             };
         }
     }
@@ -296,13 +244,20 @@
                           (appState.formData.sport === true && 
                            Object.keys(appState.formData.sportActivities).length > 0 &&
                            Object.values(appState.formData.sportActivities).every(m => m > 0));
+        
         return appState.formData.dayRating !== null && 
-               appState.formData.stress !== null && sportValid && 
-               appState.formData.smoking !== null && appState.formData.alcohol !== null && 
-               appState.formData.food !== null && appState.formData.iceBath !== null && 
-               appState.formData.healthy !== null && appState.formData.floss !== null && 
-               appState.formData.reading !== null && appState.formData.carbs !== null && 
-               appState.formData.protein !== null && appState.formData.sauna !== null;
+               appState.formData.stress !== null && 
+               sportValid && 
+               appState.formData.smoking !== null && 
+               appState.formData.alcohol !== null && 
+               appState.formData.food !== null && 
+               appState.formData.iceBath !== null && 
+               appState.formData.healthy !== null && 
+               appState.formData.floss !== null && 
+               appState.formData.reading !== null && 
+               appState.formData.carbs !== null && 
+               appState.formData.protein !== null && 
+               appState.formData.sauna !== null;
     }
 
     function handleSubmit() {
@@ -310,12 +265,24 @@
         const dt = appState.selectedDate;
         const pts = (appState.formData.sport?1:0) + (!appState.formData.smoking?1:0) + (!appState.formData.alcohol?1:0) + (appState.formData.food?1:0);
         const entry = {
-            date: dt, dayRating: appState.formData.dayRating, stress: appState.formData.stress, sport: appState.formData.sport,
+            date: dt, 
+            dayRating: appState.formData.dayRating, 
+            stress: appState.formData.stress, 
+            sport: appState.formData.sport,
             sportActivities: appState.formData.sport ? {...appState.formData.sportActivities} : {},
-            noSmoking: !appState.formData.smoking, noAlcohol: !appState.formData.alcohol, healthyFood: appState.formData.food,
-            iceBath: appState.formData.iceBath, healthy: appState.formData.healthy, floss: appState.formData.floss, 
-            reading: appState.formData.reading, carbs: appState.formData.carbs, protein: appState.formData.protein, 
-            sauna: appState.formData.sauna, weight: appState.formData.weight, points: pts, timestamp: new Date().toISOString()
+            noSmoking: !appState.formData.smoking, 
+            noAlcohol: !appState.formData.alcohol, 
+            healthyFood: appState.formData.food,
+            iceBath: appState.formData.iceBath, 
+            healthy: appState.formData.healthy, 
+            floss: appState.formData.floss, 
+            reading: appState.formData.reading,
+            carbs: appState.formData.carbs, 
+            protein: appState.formData.protein, 
+            sauna: appState.formData.sauna, 
+            weight: appState.formData.weight,
+            points: pts, 
+            timestamp: new Date().toISOString()
         };
         appState.entries = appState.entries.filter(e => e.date !== dt);
         appState.entries.push(entry);
@@ -328,9 +295,21 @@
         }
         appState.selectedDate = new Date().toISOString().split('T')[0];
         appState.formData = { 
-            dayRating: null, stress: null, sport: null, sportActivities: {}, 
-            smoking: null, alcohol: null, food: null, iceBath: null, healthy: null, 
-            floss: null, reading: null, carbs: null, protein: null, sauna: null, weight: null 
+            dayRating: null, 
+            stress: null, 
+            sport: null, 
+            sportActivities: {}, 
+            smoking: null, 
+            alcohol: null, 
+            food: null, 
+            iceBath: null, 
+            healthy: null, 
+            floss: null, 
+            reading: null, 
+            carbs: null, 
+            protein: null, 
+            sauna: null, 
+            weight: null 
         };
         renderApp();
     }
@@ -341,11 +320,14 @@
                 let sp = '';
                 if (e.sportActivities) {
                     if (typeof e.sportActivities === 'object' && !Array.isArray(e.sportActivities)) {
+                        // Neues Format
                         sp = Object.entries(e.sportActivities).map(([type, min]) => `${type}: ${min}min`).join('; ');
                     } else if (Array.isArray(e.sportActivities)) {
+                        // Altes Array-Format
                         sp = e.sportActivities.map(a => `${a.type}: ${a.duration}`).join('; ');
                     }
                 } else if (e.sportTypes && Array.isArray(e.sportTypes)) {
+                    // Ganz altes Format
                     sp = `${e.sportTypes.join(', ')} (${e.sportDuration || 'Gesamt'})`;
                 }
                 return `${e.date},${e.dayRating||''},${e.stress||''},${e.sport?'Ja':'Nein'},"${sp}",${e.noSmoking?'Ja':'Nein'},${e.noAlcohol?'Ja':'Nein'},${e.healthyFood?'Ja':'Nein'},${e.iceBath?'Ja':'Nein'},${e.healthy?'Ja':'Nein'},${e.floss?'Ja':'Nein'},${e.reading?'Ja':'Nein'},${e.sauna?'Ja':'Nein'},${e.carbs||''},${e.protein||''},${e.weight||''},${e.points},${e.timestamp||''}`;
@@ -359,30 +341,10 @@
 
     function toggleHistory() { appState.showHistory = !appState.showHistory; renderApp(); }
     function toggleViz() { appState.showViz = !appState.showViz; renderApp(); }
-    function changeVizMonth(d) { 
-        appState.vizMonth += d; 
-        if (appState.vizMonth < 0) { appState.vizMonth = 11; appState.vizYear--; } 
-        else if (appState.vizMonth > 11) { appState.vizMonth = 0; appState.vizYear++; } 
-        renderApp(); 
-    }
-    function showDayModal(d) { 
-        const e = appState.entries.find(e => e.date === d); 
-        if (!e) return; 
-        appState.modalEntry = e; 
-        renderApp(); 
-    }
-    function closeModal() { 
-        appState.modalEntry = null; 
-        const m = document.querySelector('.modal-overlay'); 
-        if (m) m.remove(); 
-        renderApp(); 
-    }
-    function editEntry(d) { 
-        appState.selectedDate = d; 
-        loadEntryForDate(); 
-        window.scrollTo({top:0,behavior:'smooth'}); 
-        renderApp(); 
-    }
+    function changeVizMonth(d) { appState.vizMonth += d; if (appState.vizMonth < 0) { appState.vizMonth = 11; appState.vizYear--; } else if (appState.vizMonth > 11) { appState.vizMonth = 0; appState.vizYear++; } renderApp(); }
+    function showDayModal(d) { const e = appState.entries.find(e => e.date === d); if (!e) return; appState.modalEntry = e; renderApp(); }
+    function closeModal() { appState.modalEntry = null; const m = document.querySelector('.modal-overlay'); if (m) m.remove(); renderApp(); }
+    function editEntry(d) { appState.selectedDate = d; loadEntryForDate(); window.scrollTo({top:0,behavior:'smooth'}); renderApp(); }
 
     function formatSportActivities(sportActs) {
         if (!sportActs) return '';
@@ -403,6 +365,11 @@
             appState.entries = [];
         }
         
+        // Entferne alte Popups bevor neu gerendert wird
+        const oldTimePopup = document.querySelector('.time-popup-overlay');
+        if (oldTimePopup) oldTimePopup.remove();
+        const oldModal = document.querySelector('.modal-overlay');
+        if (oldModal) oldModal.remove();
         const yr = new Date().getFullYear();
         const ye = appState.entries.filter(e => new Date(e.date).getFullYear() === yr);
         const stats = {
@@ -468,7 +435,10 @@
                         return `<div class="sport-activity">
                             <input type="checkbox" class="sport-checkbox" ${isChecked?'checked':''} onchange="toggleSportType('${type}')">
                             <span class="sport-label">${type}</span>
-                            <input type="text" class="sport-time-input" value="${minutes}" ${!isChecked?'disabled':''} onclick="${isChecked?`openTimePopup('${type}')`:''}" readonly>
+                            <input type="number" class="sport-time-input" value="${minutes}" ${!isChecked?'disabled':''} 
+                                min="0" max="999" 
+                                onchange="updateSportTime('${type}', this.value)"
+                                onblur="updateSportTime('${type}', this.value)">
                             <span class="sport-time-unit">min</span>
                         </div>`;
                     }).join('')}</div>` : ''}
@@ -520,8 +490,10 @@
             document.getElementById('closeBtn').addEventListener('click', function(e) { e.stopPropagation(); closeModal(); });
             document.getElementById('editBtn').addEventListener('click', function(e) { e.stopPropagation(); const d = appState.modalEntry.date; closeModal(); editEntry(d); });
         }
+
     }
 
+    // Sicherstellen, dass DOM vollständig geladen ist
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             loadEntryForDate();
