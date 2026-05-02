@@ -135,7 +135,7 @@
             modalEntry: null
         };
 
-        const SPORT_TYPES = ['Rudern', 'Laufen', 'Kraftsport', 'Dehnen', 'Wandern', 'Schwimmen'];
+        const SPORT_TYPES = ['Rudern', 'Laufen', 'Kraftsport', 'Dehnen', 'Wandern', 'Schwimmen', 'Pedal'];
 
         function setRating(v) { appState.formData.dayRating = v; renderApp(); }
         function setStress(v) { appState.formData.stress = v; renderApp(); }
@@ -430,11 +430,12 @@
                         ${appState.formData.sport === true ? `<div class="sport-details">${SPORT_TYPES.map(type => {
                             const isChecked = appState.formData.sportActivities[type] !== undefined;
                             const minutes = appState.formData.sportActivities[type] || 0;
+                            const displayValue = minutes > 0 ? minutes : '';
                             return `<div class="sport-activity">
                                 <input type="checkbox" class="sport-checkbox" ${isChecked?'checked':''} onchange="toggleSportType('${type}')">
                                 <span class="sport-label">${type}</span>
-                                <input type="number" class="sport-time-input" value="${minutes}" ${!isChecked?'disabled':''} 
-                                    min="0" max="999" 
+                                <input type="number" class="sport-time-input" value="${displayValue}" ${!isChecked?'disabled':''} 
+                                    min="0" max="999" placeholder=""
                                     onchange="updateSportTime('${type}', this.value)"
                                     onblur="updateSportTime('${type}', this.value)">
                                 <span class="sport-time-unit">min</span>
@@ -491,13 +492,37 @@
 
         }
 
+        // Migration: Konvertiere alte "Laufen" Einträge >45min zu "Pedal"
+        function migrateRunningToPedal() {
+            let changed = false;
+            appState.entries.forEach(entry => {
+                if (entry.sportActivities && typeof entry.sportActivities === 'object') {
+                    if (entry.sportActivities['Laufen'] && entry.sportActivities['Laufen'] > 45) {
+                        entry.sportActivities['Pedal'] = entry.sportActivities['Laufen'];
+                        delete entry.sportActivities['Laufen'];
+                        changed = true;
+                    }
+                }
+            });
+            if (changed) {
+                try {
+                    localStorage.setItem('healthEntries', JSON.stringify(appState.entries));
+                    console.log('Migration abgeschlossen: Laufen >45min → Pedal');
+                } catch (e) {
+                    console.error('Fehler bei Migration:', e);
+                }
+            }
+        }
+
         // Sicherstellen, dass DOM vollständig geladen ist
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function() {
+                migrateRunningToPedal();
                 loadEntryForDate();
                 renderApp();
             });
         } else {
+            migrateRunningToPedal();
             loadEntryForDate();
             renderApp();
         }
